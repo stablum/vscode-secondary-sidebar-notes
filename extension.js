@@ -444,15 +444,25 @@ class NotesViewProvider {
 </head>
 <body>
   <main class="app">
-    <header class="toolbar" aria-label="Note actions">
-      <div class="new-note-actions">
-        <button type="button" id="newProjectNote" title="New project note">+ Project</button>
-        <button type="button" id="newGlobalNote" title="New global note">+ Global</button>
+    <header class="tab-bar" aria-label="Notes">
+      <nav id="tabs" class="tabs" aria-label="Notes"></nav>
+      <div class="tab-actions" aria-label="Note actions">
+        <button type="button" id="newProjectNote" class="icon-button tab-action scope-action" title="New project note" aria-label="New project note">
+          <span class="scope-badge workspace" aria-hidden="true">P</span>
+          <span class="plus-mark" aria-hidden="true">+</span>
+        </button>
+        <button type="button" id="newGlobalNote" class="icon-button tab-action scope-action" title="New global note" aria-label="New global note">
+          <span class="scope-badge global" aria-hidden="true">G</span>
+          <span class="plus-mark" aria-hidden="true">+</span>
+        </button>
+        <button type="button" id="focusToggle" class="icon-button tab-action focus-toggle" aria-pressed="false" title="Show only the current note" aria-label="Show only the current note">
+          <span class="focus-icon" aria-hidden="true"></span>
+        </button>
+        <button type="button" id="refreshNotes" class="icon-button tab-action" title="Refresh notes" aria-label="Refresh notes">
+          <span class="refresh-icon" aria-hidden="true"></span>
+        </button>
       </div>
-      <button type="button" id="focusToggle" class="icon-button mode-toggle" aria-pressed="false" title="Show only the current note">Current</button>
-      <button type="button" id="refreshNotes" class="icon-button" title="Refresh notes">Refresh</button>
     </header>
-    <nav id="tabs" class="tabs" aria-label="Notes"></nav>
     <section id="editor" class="editor" hidden>
       <div class="title-row">
         <input id="titleInput" type="text" aria-label="Note title" maxlength="120" spellcheck="false">

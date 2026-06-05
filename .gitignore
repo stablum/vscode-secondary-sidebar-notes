@@ -1,6 +1,7 @@
 .env
 artifacts/
 *.bck
+*.bak
 *.old
 node_modules/
 *.vsix

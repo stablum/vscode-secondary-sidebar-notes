@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Moved note controls into compact icon buttons beside the tab strip.
+
 ## 0.1.2
 
 - Added a current-note-only toggle to reduce sidebar clutter.

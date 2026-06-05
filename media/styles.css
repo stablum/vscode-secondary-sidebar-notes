@@ -99,29 +99,19 @@ textarea {
 
 .app {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   height: 100vh;
   min-width: 0;
 }
 
-.toolbar {
+.tab-bar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 6px;
-  padding: 8px;
-  border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border);
-}
-
-.new-note-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
   min-width: 0;
-}
-
-.mode-toggle[aria-pressed="true"] {
-  color: var(--vscode-button-foreground);
-  background: var(--vscode-button-background);
+  padding: 6px 6px 5px 8px;
+  border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border);
 }
 
 .tabs {
@@ -129,8 +119,7 @@ textarea {
   gap: 4px;
   min-width: 0;
   overflow-x: auto;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border);
+  padding: 0;
 }
 
 .tab {
@@ -150,6 +139,101 @@ textarea {
   color: var(--vscode-tab-activeForeground);
   background: var(--vscode-tab-activeBackground);
   border-color: var(--vscode-focusBorder);
+}
+
+.tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tab-action {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  min-height: 26px;
+  padding: 0;
+  color: var(--vscode-icon-foreground);
+  background: transparent;
+  border-color: transparent;
+}
+
+.tab-action:hover {
+  color: var(--vscode-foreground);
+  background: var(--vscode-toolbar-hoverBackground, var(--vscode-button-secondaryHoverBackground));
+}
+
+.tab-action[aria-pressed="true"] {
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+}
+
+.scope-action .scope-badge {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.plus-mark {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.focus-icon {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+
+.focus-icon::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  opacity: 0.75;
+}
+
+.focus-toggle[aria-pressed="true"] .focus-icon::after {
+  left: 3px;
+  right: 3px;
+  top: 4px;
+  bottom: auto;
+  height: 1px;
+  border: 0;
+  border-top: 1.5px solid currentColor;
+  border-radius: 0;
+  box-shadow: 0 4px 0 currentColor;
+  opacity: 1;
+}
+
+.refresh-icon {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid currentColor;
+  border-left-color: transparent;
+  border-radius: 50%;
+}
+
+.refresh-icon::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: 1px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid currentColor;
+  border-left: 4px solid transparent;
 }
 
 .tab-label {
@@ -204,21 +288,12 @@ textarea {
   gap: 6px;
 }
 
-.current-only .toolbar {
-  grid-template-columns: 1fr auto;
-}
-
-.current-only .new-note-actions,
+.current-only #newProjectNote,
+.current-only #newGlobalNote,
 .current-only #refreshNotes,
-.current-only .tabs,
 .current-only #scopeSelect,
 .current-only .status-actions {
   display: none;
-}
-
-.current-only .mode-toggle {
-  grid-column: 2;
-  justify-self: end;
 }
 
 .current-only .title-row {
@@ -246,24 +321,17 @@ textarea {
 }
 
 @media (max-width: 280px) {
-  .toolbar,
-  .new-note-actions,
   .title-row,
   .status-row {
     grid-template-columns: 1fr;
   }
 
-  .toolbar,
   .status-row {
     display: grid;
   }
 
-  .mode-toggle {
-    justify-self: stretch;
-  }
-
-  .current-only .mode-toggle {
-    grid-column: 1;
+  .tab-label {
+    max-width: 92px;
   }
 
   .status-actions {

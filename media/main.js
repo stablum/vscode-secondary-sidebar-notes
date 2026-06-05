@@ -162,9 +162,11 @@
 
   function renderTabs() {
     const active = activeNote();
+    const visibleNotes = model.currentNoteOnly && active ? [active] : model.notes;
     elements.tabs.textContent = "";
+    elements.tabs.setAttribute("aria-label", model.currentNoteOnly ? "Current note" : "Notes");
 
-    for (const note of model.notes) {
+    for (const note of visibleNotes) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "tab";
@@ -189,8 +191,9 @@
   function renderMode() {
     const currentNoteOnly = Boolean(model.currentNoteOnly);
     elements.app.classList.toggle("current-only", currentNoteOnly);
-    elements.focusToggle.textContent = currentNoteOnly ? "Tabs" : "Current";
-    elements.focusToggle.title = currentNoteOnly ? "Show note tabs and actions" : "Show only the current note";
+    const label = currentNoteOnly ? "Show all note tabs" : "Show only the current note";
+    elements.focusToggle.title = label;
+    elements.focusToggle.setAttribute("aria-label", label);
     elements.focusToggle.setAttribute("aria-pressed", String(currentNoteOnly));
   }
 
