@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+- Fixed collapsed note editor height in VS Code webviews.
+
 ## 0.1.5
 
 - Expanded the note editor layout so the content area uses the available vertical space.

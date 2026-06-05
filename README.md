@@ -31,7 +31,7 @@ git clone https://github.com/stablum/vscode-secondary-sidebar-notes.git
 cd vscode-secondary-sidebar-notes
 npm run check
 npx @vscode/vsce package
-code --install-extension .\secondary-sidebar-notes-0.1.5.vsix
+code --install-extension .\secondary-sidebar-notes-0.1.6.vsix
 ```
 
 You can also install the generated `.vsix` from VS Code with `Extensions: Install from VSIX...`.
