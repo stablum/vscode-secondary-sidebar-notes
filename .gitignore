@@ -1,0 +1,9 @@
+.env
+artifacts/
+*.bck
+*.old
+
+# git --git-dir=.git-agents --work-tree=. log
+AGENTS.md
+.git-agents
+
