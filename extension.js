@@ -468,7 +468,7 @@ class NotesViewProvider {
           <option value="global">Global</option>
         </select>
       </div>
-      <textarea id="contentInput" aria-label="Note content" spellcheck="true"></textarea>
+      <div id="contentInput" class="content-input" contenteditable="plaintext-only" role="textbox" aria-label="Note content" aria-multiline="true" spellcheck="true"></div>
       <footer class="status-row">
         <span id="saveStatus" role="status"></span>
         <span class="status-actions">

@@ -60,7 +60,7 @@
       return;
     }
 
-    note.content = elements.contentInput.value;
+    note.content = getContentText();
     scheduleSave(note);
   });
 
@@ -137,8 +137,19 @@
 
     elements.titleInput.value = note.title;
     elements.scopeSelect.value = note.scope;
-    elements.contentInput.value = note.content;
+    setContentText(note.content);
     setSaveStatus(lastSavedKey === noteKey(note) ? "Saved" : "");
+  }
+
+  function getContentText() {
+    return elements.contentInput.textContent || "";
+  }
+
+  function setContentText(text) {
+    const normalized = typeof text === "string" ? text : "";
+    if (getContentText() !== normalized) {
+      elements.contentInput.textContent = normalized;
+    }
   }
 
   function renderTabs() {

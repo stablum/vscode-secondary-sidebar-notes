@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8
+
+- Replaced the note textarea with a plaintext editable surface that fills the content grid row.
+
 ## 0.1.7
 
 - Reworked the note editor layout to fill the webview viewport without height measurement.
