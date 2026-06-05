@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const VIEW_ID = "secondarySidebarNotes.notesView";
 const EXTENSION_ID = "secondarySidebarNotes";
 const ACTIVE_NOTE_KEY = "secondarySidebarNotes.activeNote";
+const CURRENT_NOTE_ONLY_KEY = "secondarySidebarNotes.currentNoteOnly";
 const STORAGE_FILE = "notes.v1.json";
 const STORAGE_BACKUP_FILE = "notes.v1.json.bak";
 const GLOBAL_SCOPE = "global";
@@ -162,6 +163,10 @@ class NotesViewProvider {
         break;
       case "openStorage":
         await this.openStorage();
+        break;
+      case "setCurrentNoteOnly":
+        await this.context.globalState.update(CURRENT_NOTE_ONLY_KEY, Boolean(message.value));
+        await this.postState();
         break;
       default:
         break;
@@ -321,6 +326,7 @@ class NotesViewProvider {
       state: {
         workspaceAvailable: this.workspaceStore.available,
         defaultScope: config.get("defaultScope", WORKSPACE_SCOPE),
+        currentNoteOnly: this.context.globalState.get(CURRENT_NOTE_ONLY_KEY, false),
         notes: this.allNotes(),
         active: activeNote ? { scope: activeNote.scope, id: activeNote.note.id } : undefined
       }
@@ -439,8 +445,11 @@ class NotesViewProvider {
 <body>
   <main class="app">
     <header class="toolbar" aria-label="Note actions">
-      <button type="button" id="newProjectNote" title="New project note">+ Project</button>
-      <button type="button" id="newGlobalNote" title="New global note">+ Global</button>
+      <div class="new-note-actions">
+        <button type="button" id="newProjectNote" title="New project note">+ Project</button>
+        <button type="button" id="newGlobalNote" title="New global note">+ Global</button>
+      </div>
+      <button type="button" id="focusToggle" class="icon-button mode-toggle" aria-pressed="false" title="Show only the current note">Current</button>
       <button type="button" id="refreshNotes" class="icon-button" title="Refresh notes">Refresh</button>
     </header>
     <nav id="tabs" class="tabs" aria-label="Notes"></nav>

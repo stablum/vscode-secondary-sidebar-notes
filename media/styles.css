@@ -106,10 +106,22 @@ textarea {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 6px;
   padding: 8px;
   border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border);
+}
+
+.new-note-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+  min-width: 0;
+}
+
+.mode-toggle[aria-pressed="true"] {
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
 }
 
 .tabs {
@@ -192,6 +204,31 @@ textarea {
   gap: 6px;
 }
 
+.current-only .toolbar {
+  grid-template-columns: 1fr auto;
+}
+
+.current-only .new-note-actions,
+.current-only #refreshNotes,
+.current-only .tabs,
+.current-only #scopeSelect,
+.current-only .status-actions {
+  display: none;
+}
+
+.current-only .mode-toggle {
+  grid-column: 2;
+  justify-self: end;
+}
+
+.current-only .title-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.current-only .editor {
+  padding-top: 6px;
+}
+
 #saveStatus.error {
   color: var(--vscode-errorForeground);
 }
@@ -210,6 +247,7 @@ textarea {
 
 @media (max-width: 280px) {
   .toolbar,
+  .new-note-actions,
   .title-row,
   .status-row {
     grid-template-columns: 1fr;
@@ -218,6 +256,14 @@ textarea {
   .toolbar,
   .status-row {
     display: grid;
+  }
+
+  .mode-toggle {
+    justify-self: stretch;
+  }
+
+  .current-only .mode-toggle {
+    grid-column: 1;
   }
 
   .status-actions {

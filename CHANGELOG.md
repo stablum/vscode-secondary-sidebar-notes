@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- Added a current-note-only toggle to reduce sidebar clutter.
+
 ## 0.1.1
 
 - Added the GNU GPLv3 license.

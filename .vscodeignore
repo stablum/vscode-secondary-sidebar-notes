@@ -1,3 +1,5 @@
+.gitignore
+.npmignore
 .git/**
 .git-agents/**
 .vscode-test/**

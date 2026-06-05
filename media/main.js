@@ -7,13 +7,15 @@
     notes: [],
     active: undefined,
     workspaceAvailable: false,
-    defaultScope: "workspace"
+    defaultScope: "workspace",
+    currentNoteOnly: false
   };
   let pendingSave = undefined;
   let pendingSnapshot = undefined;
   let lastSavedKey = undefined;
 
   const elements = {
+    app: document.querySelector(".app"),
     tabs: document.getElementById("tabs"),
     editor: document.getElementById("editor"),
     emptyState: document.getElementById("emptyState"),
@@ -23,6 +25,7 @@
     saveStatus: document.getElementById("saveStatus"),
     newProjectNote: document.getElementById("newProjectNote"),
     newGlobalNote: document.getElementById("newGlobalNote"),
+    focusToggle: document.getElementById("focusToggle"),
     refreshNotes: document.getElementById("refreshNotes"),
     deleteNote: document.getElementById("deleteNote"),
     openStorage: document.getElementById("openStorage"),
@@ -32,6 +35,14 @@
 
   elements.newProjectNote.addEventListener("click", () => createNote("workspace"));
   elements.newGlobalNote.addEventListener("click", () => createNote("global"));
+  elements.focusToggle.addEventListener("click", () => {
+    const enabled = !Boolean(model.currentNoteOnly);
+    flushPendingSave();
+    model.currentNoteOnly = enabled;
+    vscode.setState({ model });
+    renderMode();
+    vscode.postMessage({ type: "setCurrentNoteOnly", value: enabled });
+  });
   elements.emptyProjectNote.addEventListener("click", () => createNote("workspace"));
   elements.emptyGlobalNote.addEventListener("click", () => createNote("global"));
   elements.refreshNotes.addEventListener("click", () => {
@@ -134,6 +145,7 @@
     elements.emptyProjectNote.disabled = !model.workspaceAvailable;
     elements.scopeSelect.querySelector("option[value='workspace']").disabled = !model.workspaceAvailable;
 
+    renderMode();
     renderTabs();
 
     const note = activeNote();
@@ -172,6 +184,14 @@
       button.addEventListener("click", () => selectNote(note));
       elements.tabs.appendChild(button);
     }
+  }
+
+  function renderMode() {
+    const currentNoteOnly = Boolean(model.currentNoteOnly);
+    elements.app.classList.toggle("current-only", currentNoteOnly);
+    elements.focusToggle.textContent = currentNoteOnly ? "Tabs" : "Current";
+    elements.focusToggle.title = currentNoteOnly ? "Show note tabs and actions" : "Show only the current note";
+    elements.focusToggle.setAttribute("aria-pressed", String(currentNoteOnly));
   }
 
   function selectNote(note) {
