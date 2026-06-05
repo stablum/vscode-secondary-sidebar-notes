@@ -20,6 +20,22 @@ Secondary Sidebar Notes adds an editable Notes view for VS Code. It is built for
 
 VS Code's stable extension API does not currently let an extension force a view to be contributed directly into the Secondary Sidebar by default. VS Code does remember user-customized view locations after you move the view.
 
+## Install
+
+From a local checkout:
+
+```powershell
+git clone https://github.com/stablum/vscode-secondary-sidebar-notes.git
+cd vscode-secondary-sidebar-notes
+npm run check
+npx @vscode/vsce package
+code --install-extension .\secondary-sidebar-notes-0.1.1.vsix
+```
+
+You can also install the generated `.vsix` from VS Code with `Extensions: Install from VSIX...`.
+
+For development, open this folder in VS Code and press `F5`, or run `Debug: Start Debugging`, to launch an Extension Development Host.
+
 ## Storage
 
 Notes are saved outside the extension installation folder:
@@ -30,3 +46,7 @@ Notes are saved outside the extension installation folder:
 Each storage location also maintains `notes.v1.json.bak`. The extension reads the backup if the primary JSON file cannot be parsed or opened.
 
 Use `Secondary Sidebar Notes: Reveal Notes Storage` to open the storage file location.
+
+## License
+
+Secondary Sidebar Notes is licensed under GPLv3. See `LICENSE`.

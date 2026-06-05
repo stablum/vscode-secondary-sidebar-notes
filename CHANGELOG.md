@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Added the GNU GPLv3 license.
+- Added installation instructions.
+
 ## 0.1.0
 
 - Initial extension implementation.
