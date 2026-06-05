@@ -14,6 +14,7 @@ const WORKSPACE_SCOPE = "workspace";
 
 function activate(context) {
   const provider = new NotesViewProvider(context);
+  provider.syncCurrentNoteOnlyContext();
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(VIEW_ID, provider, {
@@ -22,6 +23,8 @@ function activate(context) {
     vscode.commands.registerCommand("secondarySidebarNotes.focus", () => provider.focus()),
     vscode.commands.registerCommand("secondarySidebarNotes.newGlobalNote", () => provider.createNote(GLOBAL_SCOPE)),
     vscode.commands.registerCommand("secondarySidebarNotes.newWorkspaceNote", () => provider.createNote(WORKSPACE_SCOPE)),
+    vscode.commands.registerCommand("secondarySidebarNotes.showCurrentNoteOnly", () => provider.setCurrentNoteOnly(true)),
+    vscode.commands.registerCommand("secondarySidebarNotes.showAllNoteTabs", () => provider.setCurrentNoteOnly(false)),
     vscode.commands.registerCommand("secondarySidebarNotes.refresh", () => provider.refresh()),
     vscode.commands.registerCommand("secondarySidebarNotes.openStorage", () => provider.openStorage()),
     vscode.workspace.onDidChangeConfiguration((event) => {
@@ -164,13 +167,23 @@ class NotesViewProvider {
       case "openStorage":
         await this.openStorage();
         break;
-      case "setCurrentNoteOnly":
-        await this.context.globalState.update(CURRENT_NOTE_ONLY_KEY, Boolean(message.value));
-        await this.postState();
-        break;
       default:
         break;
     }
+  }
+
+  async setCurrentNoteOnly(value) {
+    await this.context.globalState.update(CURRENT_NOTE_ONLY_KEY, Boolean(value));
+    await this.syncCurrentNoteOnlyContext();
+    await this.postState();
+  }
+
+  async syncCurrentNoteOnlyContext() {
+    await vscode.commands.executeCommand(
+      "setContext",
+      "secondarySidebarNotes.currentNoteOnly",
+      this.context.globalState.get(CURRENT_NOTE_ONLY_KEY, false)
+    );
   }
 
   async load(force = false) {
@@ -446,22 +459,6 @@ class NotesViewProvider {
   <main class="app">
     <header class="tab-bar" aria-label="Notes">
       <nav id="tabs" class="tabs" aria-label="Notes"></nav>
-      <div class="tab-actions" aria-label="Note actions">
-        <button type="button" id="newProjectNote" class="icon-button tab-action scope-action" title="New project note" aria-label="New project note">
-          <span class="scope-badge workspace" aria-hidden="true">P</span>
-          <span class="plus-mark" aria-hidden="true">+</span>
-        </button>
-        <button type="button" id="newGlobalNote" class="icon-button tab-action scope-action" title="New global note" aria-label="New global note">
-          <span class="scope-badge global" aria-hidden="true">G</span>
-          <span class="plus-mark" aria-hidden="true">+</span>
-        </button>
-        <button type="button" id="focusToggle" class="icon-button tab-action focus-toggle" aria-pressed="false" title="Show only the current note" aria-label="Show only the current note">
-          <span class="focus-icon" aria-hidden="true"></span>
-        </button>
-        <button type="button" id="refreshNotes" class="icon-button tab-action" title="Refresh notes" aria-label="Refresh notes">
-          <span class="refresh-icon" aria-hidden="true"></span>
-        </button>
-      </div>
     </header>
     <section id="editor" class="editor" hidden>
       <div class="title-row">

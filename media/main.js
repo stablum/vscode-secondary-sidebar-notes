@@ -23,32 +23,14 @@
     scopeSelect: document.getElementById("scopeSelect"),
     contentInput: document.getElementById("contentInput"),
     saveStatus: document.getElementById("saveStatus"),
-    newProjectNote: document.getElementById("newProjectNote"),
-    newGlobalNote: document.getElementById("newGlobalNote"),
-    focusToggle: document.getElementById("focusToggle"),
-    refreshNotes: document.getElementById("refreshNotes"),
     deleteNote: document.getElementById("deleteNote"),
     openStorage: document.getElementById("openStorage"),
     emptyProjectNote: document.getElementById("emptyProjectNote"),
     emptyGlobalNote: document.getElementById("emptyGlobalNote")
   };
 
-  elements.newProjectNote.addEventListener("click", () => createNote("workspace"));
-  elements.newGlobalNote.addEventListener("click", () => createNote("global"));
-  elements.focusToggle.addEventListener("click", () => {
-    const enabled = !Boolean(model.currentNoteOnly);
-    flushPendingSave();
-    model.currentNoteOnly = enabled;
-    vscode.setState({ model });
-    renderMode();
-    vscode.postMessage({ type: "setCurrentNoteOnly", value: enabled });
-  });
   elements.emptyProjectNote.addEventListener("click", () => createNote("workspace"));
   elements.emptyGlobalNote.addEventListener("click", () => createNote("global"));
-  elements.refreshNotes.addEventListener("click", () => {
-    flushPendingSave();
-    vscode.postMessage({ type: "refresh" });
-  });
   elements.openStorage.addEventListener("click", () => {
     flushPendingSave();
     vscode.postMessage({ type: "openStorage" });
@@ -141,7 +123,6 @@
     const hasNotes = model.notes.length > 0;
     elements.editor.hidden = !hasNotes;
     elements.emptyState.hidden = hasNotes;
-    elements.newProjectNote.disabled = !model.workspaceAvailable;
     elements.emptyProjectNote.disabled = !model.workspaceAvailable;
     elements.scopeSelect.querySelector("option[value='workspace']").disabled = !model.workspaceAvailable;
 
@@ -162,11 +143,9 @@
 
   function renderTabs() {
     const active = activeNote();
-    const visibleNotes = model.currentNoteOnly && active ? [active] : model.notes;
     elements.tabs.textContent = "";
-    elements.tabs.setAttribute("aria-label", model.currentNoteOnly ? "Current note" : "Notes");
 
-    for (const note of visibleNotes) {
+    for (const note of model.notes) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "tab";
@@ -189,12 +168,7 @@
   }
 
   function renderMode() {
-    const currentNoteOnly = Boolean(model.currentNoteOnly);
-    elements.app.classList.toggle("current-only", currentNoteOnly);
-    const label = currentNoteOnly ? "Show all note tabs" : "Show only the current note";
-    elements.focusToggle.title = label;
-    elements.focusToggle.setAttribute("aria-label", label);
-    elements.focusToggle.setAttribute("aria-pressed", String(currentNoteOnly));
+    elements.app.classList.toggle("current-only", Boolean(model.currentNoteOnly));
   }
 
   function selectNote(note) {

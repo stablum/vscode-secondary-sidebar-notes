@@ -2,7 +2,7 @@
   "name": "secondary-sidebar-notes",
   "displayName": "Secondary Sidebar Notes",
   "description": "Editable project and global note tabs for a VS Code sidebar view.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "stablum",
   "engines": {
     "vscode": "^1.85.0"
@@ -22,6 +22,8 @@
     "onCommand:secondarySidebarNotes.focus",
     "onCommand:secondarySidebarNotes.newGlobalNote",
     "onCommand:secondarySidebarNotes.newWorkspaceNote",
+    "onCommand:secondarySidebarNotes.showCurrentNoteOnly",
+    "onCommand:secondarySidebarNotes.showAllNoteTabs",
     "onCommand:secondarySidebarNotes.refresh",
     "onCommand:secondarySidebarNotes.openStorage"
   ],
@@ -66,6 +68,18 @@
         "icon": "$(globe)"
       },
       {
+        "command": "secondarySidebarNotes.showCurrentNoteOnly",
+        "title": "Secondary Sidebar Notes: Show Current Note Only",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(screen-full)"
+      },
+      {
+        "command": "secondarySidebarNotes.showAllNoteTabs",
+        "title": "Secondary Sidebar Notes: Show All Note Tabs",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(list-unordered)"
+      },
+      {
         "command": "secondarySidebarNotes.refresh",
         "title": "Secondary Sidebar Notes: Refresh Notes",
         "category": "Secondary Sidebar Notes",
@@ -91,14 +105,24 @@
           "group": "navigation@2"
         },
         {
+          "command": "secondarySidebarNotes.showCurrentNoteOnly",
+          "when": "view == secondarySidebarNotes.notesView && !secondarySidebarNotes.currentNoteOnly",
+          "group": "navigation@3"
+        },
+        {
+          "command": "secondarySidebarNotes.showAllNoteTabs",
+          "when": "view == secondarySidebarNotes.notesView && secondarySidebarNotes.currentNoteOnly",
+          "group": "navigation@3"
+        },
+        {
           "command": "secondarySidebarNotes.refresh",
           "when": "view == secondarySidebarNotes.notesView",
-          "group": "navigation@3"
+          "group": "navigation@4"
         },
         {
           "command": "secondarySidebarNotes.openStorage",
           "when": "view == secondarySidebarNotes.notesView",
-          "group": "navigation@4"
+          "group": "navigation@5"
         }
       ]
     },

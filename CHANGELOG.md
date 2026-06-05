@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- Moved the current-note toggle to the native VS Code view title toolbar.
+
 ## 0.1.3
 
 - Moved note controls into compact icon buttons beside the tab strip.
