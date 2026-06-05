@@ -1,0 +1,9 @@
+.git/**
+.git-agents/**
+.vscode-test/**
+.npm-cache/**
+artifacts/**
+node_modules/**
+*.vsix
+AGENTS.md
+.env

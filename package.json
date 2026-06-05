@@ -1,0 +1,139 @@
+{
+  "name": "secondary-sidebar-notes",
+  "displayName": "Secondary Sidebar Notes",
+  "description": "Editable project and global note tabs for a VS Code sidebar view.",
+  "version": "0.1.0",
+  "publisher": "stablum",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "notes",
+    "sidebar",
+    "secondary sidebar",
+    "workspace notes"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onView:secondarySidebarNotes.notesView",
+    "onCommand:secondarySidebarNotes.focus",
+    "onCommand:secondarySidebarNotes.newGlobalNote",
+    "onCommand:secondarySidebarNotes.newWorkspaceNote",
+    "onCommand:secondarySidebarNotes.refresh",
+    "onCommand:secondarySidebarNotes.openStorage"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "secondarySidebarNotes",
+          "title": "Notes",
+          "icon": "resources/notes.svg"
+        }
+      ]
+    },
+    "views": {
+      "secondarySidebarNotes": [
+        {
+          "id": "secondarySidebarNotes.notesView",
+          "name": "Notes",
+          "type": "webview",
+          "icon": "resources/notes.svg",
+          "contextualTitle": "Secondary Sidebar Notes"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "secondarySidebarNotes.focus",
+        "title": "Secondary Sidebar Notes: Focus Notes",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(notebook)"
+      },
+      {
+        "command": "secondarySidebarNotes.newWorkspaceNote",
+        "title": "Secondary Sidebar Notes: New Project Note",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "secondarySidebarNotes.newGlobalNote",
+        "title": "Secondary Sidebar Notes: New Global Note",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "secondarySidebarNotes.refresh",
+        "title": "Secondary Sidebar Notes: Refresh Notes",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "secondarySidebarNotes.openStorage",
+        "title": "Secondary Sidebar Notes: Reveal Notes Storage",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(folder-opened)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "secondarySidebarNotes.newWorkspaceNote",
+          "when": "view == secondarySidebarNotes.notesView && workspaceFolderCount != 0",
+          "group": "navigation@1"
+        },
+        {
+          "command": "secondarySidebarNotes.newGlobalNote",
+          "when": "view == secondarySidebarNotes.notesView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "secondarySidebarNotes.refresh",
+          "when": "view == secondarySidebarNotes.notesView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "secondarySidebarNotes.openStorage",
+          "when": "view == secondarySidebarNotes.notesView",
+          "group": "navigation@4"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Secondary Sidebar Notes",
+      "properties": {
+        "secondarySidebarNotes.defaultScope": {
+          "type": "string",
+          "enum": [
+            "workspace",
+            "global"
+          ],
+          "default": "workspace",
+          "description": "Default scope used when the first note is created."
+        },
+        "secondarySidebarNotes.autoCreateFirstNote": {
+          "type": "boolean",
+          "default": true,
+          "description": "Create an empty first note automatically when the notes view opens."
+        },
+        "secondarySidebarNotes.confirmDelete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask for confirmation before deleting a note."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "check": "node --check extension.js && node --check media/main.js",
+    "package:dry-run": "npm pack --dry-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com-vscode-secondary-sidebar-notes:stablum/vscode-secondary-sidebar-notes.git"
+  },
+  "license": "MIT"
+}

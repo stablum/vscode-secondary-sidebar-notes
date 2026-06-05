@@ -1,0 +1,227 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  color: var(--vscode-foreground);
+  background: var(--vscode-sideBar-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  min-height: 28px;
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button.secondary,
+button.icon-button {
+  color: var(--vscode-foreground);
+  background: var(--vscode-button-secondaryBackground);
+}
+
+button.secondary:hover,
+button.icon-button:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+button.danger {
+  color: var(--vscode-errorForeground);
+  background: transparent;
+  border-color: var(--vscode-input-border);
+}
+
+button.danger:hover {
+  background: var(--vscode-inputValidation-errorBackground);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 4px;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
+input,
+select {
+  min-height: 30px;
+  padding: 4px 7px;
+}
+
+textarea {
+  flex: 1 1 auto;
+  min-height: 180px;
+  padding: 8px;
+  line-height: 1.45;
+  resize: none;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  height: 100vh;
+  min-width: 0;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  max-width: 180px;
+  min-height: 30px;
+  color: var(--vscode-foreground);
+  background: var(--vscode-tab-inactiveBackground);
+  border: 1px solid var(--vscode-tab-border);
+  border-radius: 4px;
+}
+
+.tab[aria-selected="true"] {
+  color: var(--vscode-tab-activeForeground);
+  background: var(--vscode-tab-activeBackground);
+  border-color: var(--vscode-focusBorder);
+}
+
+.tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scope-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--vscode-badge-foreground);
+  background: var(--vscode-badge-background);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.scope-badge.global {
+  color: var(--vscode-statusBarItem-remoteForeground);
+  background: var(--vscode-statusBarItem-remoteBackground);
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px;
+}
+
+.title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(82px, 0.36fr);
+  gap: 6px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 30px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.status-actions {
+  display: flex;
+  gap: 6px;
+}
+
+#saveStatus.error {
+  color: var(--vscode-errorForeground);
+}
+
+.empty-state {
+  padding: 14px 10px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.empty-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+@media (max-width: 280px) {
+  .toolbar,
+  .title-row,
+  .status-row {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar,
+  .status-row {
+    display: grid;
+  }
+
+  .status-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -2,8 +2,12 @@
 artifacts/
 *.bck
 *.old
+node_modules/
+*.vsix
+out/
+dist/
+.vscode-test/
 
 # git --git-dir=.git-agents --work-tree=. log
 AGENTS.md
 .git-agents
-
