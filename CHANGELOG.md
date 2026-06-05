@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+- Expanded the note editor layout so the content area uses the available vertical space.
+
 ## 0.1.4
 
 - Moved the current-note toggle to the native VS Code view title toolbar.

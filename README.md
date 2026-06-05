@@ -10,7 +10,7 @@ Secondary Sidebar Notes adds an editable Notes view for VS Code. It is built for
 - A current-note-only mode hides inactive tabs and secondary actions when you want a cleaner note surface.
 - Project notes are stored in VS Code workspace storage.
 - Global notes are stored in VS Code global extension storage.
-- Note content is edited directly in the sidebar webview, not in editor tabs.
+- Note content is edited directly in the sidebar webview, with the editor filling the available vertical space.
 - Writes use JSON files plus backup files under VS Code-managed storage locations, so extension and VS Code upgrades do not overwrite note content.
 
 ## Usage
@@ -31,7 +31,7 @@ git clone https://github.com/stablum/vscode-secondary-sidebar-notes.git
 cd vscode-secondary-sidebar-notes
 npm run check
 npx @vscode/vsce package
-code --install-extension .\secondary-sidebar-notes-0.1.4.vsix
+code --install-extension .\secondary-sidebar-notes-0.1.5.vsix
 ```
 
 You can also install the generated `.vsix` from VS Code with `Extensions: Install from VSIX...`.
