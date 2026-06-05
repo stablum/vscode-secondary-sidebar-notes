@@ -110,16 +110,9 @@
       flushPendingSave();
     }
   });
-  window.addEventListener("resize", syncViewportHeight);
 
-  syncViewportHeight();
   render();
   vscode.postMessage({ type: "ready" });
-
-  function syncViewportHeight() {
-    const height = Math.max(window.innerHeight || 0, 240);
-    document.documentElement.style.setProperty("--notes-view-height", `${height}px`);
-  }
 
   function createNote(scope) {
     flushPendingSave();
