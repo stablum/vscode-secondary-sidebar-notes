@@ -2,6 +2,8 @@
 
 const vscode = require("vscode");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
 const VIEW_ID = "secondarySidebarNotes.notesView";
 const EXTENSION_ID = "secondarySidebarNotes";
@@ -17,12 +19,14 @@ function activate(context) {
   provider.syncCurrentNoteOnlyContext();
 
   context.subscriptions.push(
+    provider,
     vscode.window.registerWebviewViewProvider(VIEW_ID, provider, {
       webviewOptions: { retainContextWhenHidden: true }
     }),
     vscode.commands.registerCommand("secondarySidebarNotes.focus", () => provider.focus()),
     vscode.commands.registerCommand("secondarySidebarNotes.newGlobalNote", () => provider.createNote(GLOBAL_SCOPE)),
     vscode.commands.registerCommand("secondarySidebarNotes.newWorkspaceNote", () => provider.createNote(WORKSPACE_SCOPE)),
+    vscode.commands.registerCommand("secondarySidebarNotes.addExternalFileNote", () => provider.addExternalFileNotes()),
     vscode.commands.registerCommand("secondarySidebarNotes.showCurrentNoteOnly", () => provider.setCurrentNoteOnly(true)),
     vscode.commands.registerCommand("secondarySidebarNotes.showAllNoteTabs", () => provider.setCurrentNoteOnly(false)),
     vscode.commands.registerCommand("secondarySidebarNotes.refresh", () => provider.refresh()),
@@ -48,6 +52,20 @@ class NotesViewProvider {
     this.workspaceDocument = emptyDocument();
     this.loaded = false;
     this.view = undefined;
+    this.watchedExternalFiles = new Set();
+    this.externalRefreshTimer = undefined;
+  }
+
+  dispose() {
+    for (const filePath of this.watchedExternalFiles) {
+      fs.unwatchFile(filePath);
+    }
+    this.watchedExternalFiles.clear();
+
+    if (this.externalRefreshTimer) {
+      clearTimeout(this.externalRefreshTimer);
+      this.externalRefreshTimer = undefined;
+    }
   }
 
   async resolveWebviewView(webviewView) {
@@ -98,6 +116,64 @@ class NotesViewProvider {
     targetDocument.updatedAt = now;
     await this.saveScope(targetScope);
     await this.setActiveNote(targetScope, note.id);
+    await this.focus();
+    await this.postState();
+  }
+
+  async addExternalFileNotes() {
+    const uris = await vscode.window.showOpenDialog({
+      canSelectFiles: true,
+      canSelectFolders: false,
+      canSelectMany: true,
+      openLabel: "Add File-Backed Note"
+    });
+
+    if (!uris || uris.length === 0) {
+      return;
+    }
+
+    await this.addExternalFileNoteUris(uris);
+  }
+
+  async addExternalFileNotesFromUris(values) {
+    const uris = Array.isArray(values) ? values.map(parseExternalUri).filter(Boolean) : [];
+    if (uris.length === 0) {
+      vscode.window.showInformationMessage("Drop one or more file-backed notes from VS Code's Explorer or editor tabs.");
+      return;
+    }
+
+    await this.addExternalFileNoteUris(uris);
+  }
+
+  async addExternalFileNoteUris(uris) {
+    await this.load();
+
+    const externalUris = uniqueExternalUris(uris).filter(isSupportedExternalUri);
+    if (externalUris.length === 0) {
+      vscode.window.showInformationMessage("No readable file resources were found in the drop.");
+      return;
+    }
+
+    const config = vscode.workspace.getConfiguration(EXTENSION_ID);
+    const targetScope = this.normalizeTargetScope(config.get("defaultScope", WORKSPACE_SCOPE));
+    const targetDocument = this.documentForScope(targetScope);
+    const now = new Date().toISOString();
+    const addedNotes = externalUris.map((uri) => ({
+      id: createId(),
+      title: titleFromUri(uri),
+      content: "",
+      source: {
+        type: "file",
+        uri: uri.toString()
+      },
+      createdAt: now,
+      updatedAt: now
+    }));
+
+    targetDocument.notes.push(...addedNotes);
+    targetDocument.updatedAt = now;
+    await this.saveScope(targetScope);
+    await this.setActiveNote(targetScope, addedNotes[0].id);
     await this.focus();
     await this.postState();
   }
@@ -167,6 +243,12 @@ class NotesViewProvider {
       case "openStorage":
         await this.openStorage();
         break;
+      case "addExternalFileNote":
+        await this.addExternalFileNotes();
+        break;
+      case "addExternalFileNotesFromUris":
+        await this.addExternalFileNotesFromUris(message.uris);
+        break;
       default:
         break;
     }
@@ -231,7 +313,6 @@ class NotesViewProvider {
     const note = this.findNote(scope, id);
     if (note) {
       await this.setActiveNote(scope, id);
-      await this.postState();
     }
   }
 
@@ -250,7 +331,11 @@ class NotesViewProvider {
     }
 
     if (Object.prototype.hasOwnProperty.call(changes, "content") && typeof changes.content === "string") {
-      note.content = changes.content;
+      if (isFileBacked(note)) {
+        await writeExternalContent(note, changes.content);
+      } else {
+        note.content = changes.content;
+      }
       changed = true;
     }
 
@@ -334,13 +419,16 @@ class NotesViewProvider {
 
     const activeNote = await this.getActiveNote();
     const config = vscode.workspace.getConfiguration(EXTENSION_ID);
+    const notes = await this.notesForWebview();
+    this.syncExternalFileWatchers(notes);
+
     this.postMessage({
       type: "state",
       state: {
         workspaceAvailable: this.workspaceStore.available,
         defaultScope: config.get("defaultScope", WORKSPACE_SCOPE),
         currentNoteOnly: this.context.globalState.get(CURRENT_NOTE_ONLY_KEY, false),
-        notes: this.allNotes(),
+        notes,
         active: activeNote ? { scope: activeNote.scope, id: activeNote.note.id } : undefined
       }
     });
@@ -435,6 +523,77 @@ class NotesViewProvider {
     return notes;
   }
 
+  async notesForWebview() {
+    const notes = this.allNotes();
+    await Promise.all(notes.map(async (note) => {
+      if (!isFileBacked(note)) {
+        note.sourceKind = "internal";
+        return;
+      }
+
+      const uri = vscode.Uri.parse(note.source.uri);
+      note.sourceKind = "file";
+      note.sourceLabel = sourceLabel(uri);
+      note.sourceUri = uri.toString();
+
+      try {
+        note.content = await readExternalContent(note);
+        note.sourceError = undefined;
+      } catch (error) {
+        note.content = "";
+        note.sourceError = error instanceof Error ? error.message : String(error);
+      }
+    }));
+
+    return notes;
+  }
+
+  syncExternalFileWatchers(notes) {
+    const nextFiles = new Set();
+
+    for (const note of notes) {
+      if (!isFileBacked(note)) {
+        continue;
+      }
+
+      const uri = vscode.Uri.parse(note.source.uri);
+      if (uri.scheme === "file") {
+        nextFiles.add(uri.fsPath);
+      }
+    }
+
+    for (const filePath of this.watchedExternalFiles) {
+      if (!nextFiles.has(filePath)) {
+        fs.unwatchFile(filePath);
+        this.watchedExternalFiles.delete(filePath);
+      }
+    }
+
+    for (const filePath of nextFiles) {
+      if (this.watchedExternalFiles.has(filePath)) {
+        continue;
+      }
+
+      fs.watchFile(filePath, { interval: 1000 }, (current, previous) => {
+        if (current.mtimeMs !== previous.mtimeMs || current.size !== previous.size) {
+          this.scheduleExternalRefresh();
+        }
+      });
+      this.watchedExternalFiles.add(filePath);
+    }
+  }
+
+  scheduleExternalRefresh() {
+    if (this.externalRefreshTimer) {
+      clearTimeout(this.externalRefreshTimer);
+    }
+
+    this.externalRefreshTimer = setTimeout(() => {
+      this.externalRefreshTimer = undefined;
+      this.postState().catch((error) => this.reportError(error));
+    }, 250);
+  }
+
   reportError(error) {
     const message = error instanceof Error ? error.message : String(error);
     vscode.window.showErrorMessage(`Secondary Sidebar Notes: ${message}`);
@@ -457,33 +616,16 @@ class NotesViewProvider {
 </head>
 <body>
   <main class="app">
-    <header class="tab-bar" aria-label="Notes">
-      <nav id="tabs" class="tabs" aria-label="Notes"></nav>
-    </header>
-    <section id="editor" class="editor" hidden>
-      <div class="title-row">
-        <input id="titleInput" type="text" aria-label="Note title" maxlength="120" spellcheck="false">
-        <select id="scopeSelect" aria-label="Note scope">
-          <option value="workspace">Project</option>
-          <option value="global">Global</option>
-        </select>
-      </div>
-      <div id="contentInput" class="content-input" contenteditable="plaintext-only" role="textbox" aria-label="Note content" aria-multiline="true" spellcheck="true"></div>
-      <footer class="status-row">
-        <span id="saveStatus" role="status"></span>
-        <span class="status-actions">
-          <button type="button" id="openStorage" title="Reveal notes storage">Storage</button>
-          <button type="button" id="deleteNote" class="danger" title="Delete note">Delete</button>
-        </span>
-      </footer>
-    </section>
+    <section id="notesPanel" class="notes-panel" aria-label="Notes" hidden></section>
     <section id="emptyState" class="empty-state" hidden>
       <p>No notes yet.</p>
       <div class="empty-actions">
         <button type="button" id="emptyProjectNote">New project note</button>
         <button type="button" id="emptyGlobalNote">New global note</button>
+        <button type="button" id="emptyExternalNote">Add file-backed note</button>
       </div>
     </section>
+    <div id="dropOverlay" class="drop-overlay" hidden>Drop files to add file-backed notes</div>
   </main>
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
@@ -603,13 +745,37 @@ function normalizeNote(value, seen) {
   seen.add(id);
 
   const now = new Date().toISOString();
-  return {
+  const source = normalizeSource(value.source);
+  const normalized = {
     id,
     title: typeof value.title === "string" ? value.title : "Untitled note",
-    content: typeof value.content === "string" ? value.content : "",
+    content: source ? "" : typeof value.content === "string" ? value.content : "",
     createdAt: typeof value.createdAt === "string" ? value.createdAt : now,
     updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : now
   };
+
+  if (source) {
+    normalized.source = source;
+  }
+
+  return normalized;
+}
+
+function normalizeSource(value) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  if (value.type !== "file" || typeof value.uri !== "string" || value.uri.trim().length === 0) {
+    return undefined;
+  }
+
+  const uri = parseExternalUri(value.uri);
+  if (uri && !isSupportedExternalUri(uri)) {
+    return undefined;
+  }
+
+  return uri ? { type: "file", uri: uri.toString() } : undefined;
 }
 
 function nextUntitledTitle(notes, scope) {
@@ -628,6 +794,87 @@ function nextUntitledTitle(notes, scope) {
 
 function displayTitle(note) {
   return note.title.trim() || "Untitled note";
+}
+
+function titleFromUri(uri) {
+  if (uri.scheme === "file") {
+    return path.basename(uri.fsPath) || "File note";
+  }
+
+  const segments = uri.path.split("/").filter(Boolean);
+  return segments[segments.length - 1] || uri.authority || "File note";
+}
+
+function sourceLabel(uri) {
+  return uri.scheme === "file" ? uri.fsPath : uri.toString();
+}
+
+function uniqueExternalUris(uris) {
+  const seen = new Set();
+  const unique = [];
+
+  for (const uri of uris) {
+    if (!uri) {
+      continue;
+    }
+
+    const key = uri.toString();
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(uri);
+    }
+  }
+
+  return unique;
+}
+
+function isSupportedExternalUri(uri) {
+  return Boolean(uri && (uri.scheme === "file" || uri.scheme === "vscode-remote"));
+}
+
+function isFileBacked(note) {
+  return Boolean(note && note.source && note.source.type === "file" && typeof note.source.uri === "string");
+}
+
+async function readExternalContent(note) {
+  const uri = vscode.Uri.parse(note.source.uri);
+  const bytes = await vscode.workspace.fs.readFile(uri);
+  return Buffer.from(bytes).toString("utf8");
+}
+
+async function writeExternalContent(note, content) {
+  const uri = vscode.Uri.parse(note.source.uri);
+  await vscode.workspace.fs.writeFile(uri, Buffer.from(content, "utf8"));
+}
+
+function parseExternalUri(value) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (/^[a-zA-Z]:[\\/]/.test(trimmed) || trimmed.startsWith("\\\\")) {
+    return vscode.Uri.file(trimmed);
+  }
+
+  if (path.isAbsolute(trimmed)) {
+    return vscode.Uri.file(trimmed);
+  }
+
+  try {
+    const parsed = vscode.Uri.parse(trimmed, true);
+    if (parsed.scheme) {
+      return parsed;
+    }
+  } catch (error) {
+    // Fall back to local filesystem paths below.
+  }
+
+  return undefined;
 }
 
 function noteKey(scope, id) {

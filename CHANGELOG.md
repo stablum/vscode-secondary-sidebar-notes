@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.9
+
+- Hid note titles and metadata in current-note-only mode.
+- Replaced the compact tab strip with richer stacked note panels in expanded mode.
+- Added live file-backed notes that read from and write to external source files.
+- Added file drag-and-drop support for creating file-backed notes from VS Code editor tabs and the Explorer.
+
 ## 0.1.8
 
 - Replaced the note textarea with a plaintext editable surface that fills the content grid row.
