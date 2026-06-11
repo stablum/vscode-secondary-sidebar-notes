@@ -103,6 +103,11 @@ select {
   gap: 10px;
 }
 
+.compact-layout .notes-panel {
+  gap: 4px;
+  padding: 4px;
+}
+
 .notes-panel[hidden],
 .empty-state[hidden],
 .drop-overlay[hidden] {
@@ -242,10 +247,16 @@ select {
 
 .compact-layout .content-input {
   min-height: 120px;
+  padding: 6px;
 }
 
 .compact-layout .note-footer {
-  padding: 2px 2px 0;
+  min-height: 16px;
+  padding: 1px 2px 0;
+}
+
+.compact-layout .note-footer.empty {
+  display: none;
 }
 
 .current-only .notes-panel {

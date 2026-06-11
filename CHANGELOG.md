@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.12
+
+- Reduced compact layout spacing between stacked notes.
+- Collapsed the native `Drop Files` view by default and hid it while compact layout is active.
+
 ## 0.1.11
 
 - Removed the extra outer note box in compact layout so each compact note appears as a single editable box.

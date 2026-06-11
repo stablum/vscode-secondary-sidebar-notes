@@ -227,6 +227,7 @@
       status.classList.add("error");
       status.title = note.sourceError;
     }
+    syncFooterVisibility(footer, status);
 
     const actions = document.createElement("div");
     actions.className = "note-actions";
@@ -361,7 +362,18 @@
     if (status) {
       status.textContent = text;
       status.classList.toggle("error", Boolean(isError));
+      syncFooterVisibility(status.closest(".note-footer"), status);
     }
+  }
+
+  function syncFooterVisibility(footer, status) {
+    if (!footer || !status) {
+      return;
+    }
+
+    const text = status.textContent || "";
+    const isQuietCompactStatus = model.compactLayout && !status.classList.contains("error") && text === "Saved";
+    footer.classList.toggle("empty", !text || isQuietCompactStatus);
   }
 
   function setActiveStatus(text, isError) {
