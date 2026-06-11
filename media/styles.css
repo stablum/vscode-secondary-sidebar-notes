@@ -225,6 +225,22 @@ select {
   gap: 6px;
 }
 
+.compact-layout .note-card {
+  grid-template-rows: minmax(120px, auto) auto;
+  gap: 5px;
+  padding: 6px;
+}
+
+.compact-layout .note-header,
+.compact-layout .note-meta,
+.compact-layout .note-actions {
+  display: none;
+}
+
+.compact-layout .content-input {
+  min-height: 120px;
+}
+
 .current-only .notes-panel {
   padding: 0;
   overflow: hidden;

@@ -2,7 +2,7 @@
   "name": "secondary-sidebar-notes",
   "displayName": "Secondary Sidebar Notes",
   "description": "Editable project, global, and file-backed notes for a VS Code sidebar view.",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "publisher": "stablum",
   "engines": {
     "vscode": "^1.85.0"
@@ -23,6 +23,8 @@
     "onCommand:secondarySidebarNotes.newGlobalNote",
     "onCommand:secondarySidebarNotes.newWorkspaceNote",
     "onCommand:secondarySidebarNotes.addExternalFileNote",
+    "onCommand:secondarySidebarNotes.showCompactLayout",
+    "onCommand:secondarySidebarNotes.showDetailedLayout",
     "onCommand:secondarySidebarNotes.showCurrentNoteOnly",
     "onCommand:secondarySidebarNotes.showAllNoteTabs",
     "onCommand:secondarySidebarNotes.refresh",
@@ -75,6 +77,18 @@
         "icon": "$(link-external)"
       },
       {
+        "command": "secondarySidebarNotes.showCompactLayout",
+        "title": "Secondary Sidebar Notes: Hide Note Details",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(fold)"
+      },
+      {
+        "command": "secondarySidebarNotes.showDetailedLayout",
+        "title": "Secondary Sidebar Notes: Show Note Details",
+        "category": "Secondary Sidebar Notes",
+        "icon": "$(unfold)"
+      },
+      {
         "command": "secondarySidebarNotes.showCurrentNoteOnly",
         "title": "Secondary Sidebar Notes: Show Current Note Only",
         "category": "Secondary Sidebar Notes",
@@ -82,7 +96,7 @@
       },
       {
         "command": "secondarySidebarNotes.showAllNoteTabs",
-        "title": "Secondary Sidebar Notes: Show All Note Tabs",
+        "title": "Secondary Sidebar Notes: Show All Notes",
         "category": "Secondary Sidebar Notes",
         "icon": "$(list-unordered)"
       },
@@ -117,24 +131,34 @@
           "group": "navigation@3"
         },
         {
+          "command": "secondarySidebarNotes.showCompactLayout",
+          "when": "view == secondarySidebarNotes.notesView && !secondarySidebarNotes.compactLayout",
+          "group": "navigation@4"
+        },
+        {
+          "command": "secondarySidebarNotes.showDetailedLayout",
+          "when": "view == secondarySidebarNotes.notesView && secondarySidebarNotes.compactLayout",
+          "group": "navigation@4"
+        },
+        {
           "command": "secondarySidebarNotes.showCurrentNoteOnly",
           "when": "view == secondarySidebarNotes.notesView && !secondarySidebarNotes.currentNoteOnly",
-          "group": "navigation@4"
+          "group": "navigation@5"
         },
         {
           "command": "secondarySidebarNotes.showAllNoteTabs",
           "when": "view == secondarySidebarNotes.notesView && secondarySidebarNotes.currentNoteOnly",
-          "group": "navigation@4"
+          "group": "navigation@5"
         },
         {
           "command": "secondarySidebarNotes.refresh",
           "when": "view == secondarySidebarNotes.notesView",
-          "group": "navigation@5"
+          "group": "navigation@6"
         },
         {
           "command": "secondarySidebarNotes.openStorage",
           "when": "view == secondarySidebarNotes.notesView",
-          "group": "navigation@6"
+          "group": "navigation@7"
         }
       ]
     },

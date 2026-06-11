@@ -8,7 +8,8 @@
     active: undefined,
     workspaceAvailable: false,
     defaultScope: "workspace",
-    currentNoteOnly: false
+    currentNoteOnly: false,
+    compactLayout: false
   };
 
   const pendingSaves = new Map();
@@ -31,10 +32,10 @@
   elements.emptyGlobalNote.addEventListener("click", () => createNote("global"));
   elements.emptyExternalNote.addEventListener("click", addExternalFileNote);
 
-  elements.app.addEventListener("dragenter", handleDragEnter);
-  elements.app.addEventListener("dragover", handleDragOver);
-  elements.app.addEventListener("dragleave", handleDragLeave);
-  elements.app.addEventListener("drop", handleDrop);
+  elements.app.addEventListener("dragenter", handleDragEnter, true);
+  elements.app.addEventListener("dragover", handleDragOver, true);
+  elements.app.addEventListener("dragleave", handleDragLeave, true);
+  elements.app.addEventListener("drop", handleDrop, true);
 
   window.addEventListener("message", (event) => {
     const message = event.data;
@@ -116,6 +117,7 @@
   function render() {
     const hasNotes = model.notes.length > 0;
     elements.app.classList.toggle("current-only", Boolean(model.currentNoteOnly));
+    elements.app.classList.toggle("compact-layout", Boolean(model.compactLayout));
     elements.notesPanel.hidden = !hasNotes;
     elements.emptyState.hidden = hasNotes;
     elements.emptyProjectNote.disabled = !model.workspaceAvailable;
@@ -471,7 +473,11 @@
     flushAllPendingSaves();
 
     const uris = collectDroppedUris(event.dataTransfer);
-    vscode.postMessage({ type: "addExternalFileNotesFromUris", uris });
+    vscode.postMessage({
+      type: "addExternalFileNotesFromUris",
+      uris,
+      useActiveEditorFallback: isProbableResourceDrop(event.dataTransfer)
+    });
   }
 
   function showDropOverlay() {
@@ -490,8 +496,8 @@
       return [];
     }
 
-    addCandidateText(dataTransfer.getData("text/uri-list"), values);
-    addCandidateText(dataTransfer.getData("text/plain"), values);
+    addCandidateText(getTransferData(dataTransfer, "text/uri-list"), values);
+    addCandidateText(getTransferData(dataTransfer, "text/plain"), values);
 
     for (const file of Array.from(dataTransfer.files || [])) {
       if (typeof file.path === "string" && file.path.length > 0) {
@@ -511,10 +517,18 @@
         continue;
       }
 
-      addCandidateText(dataTransfer.getData(type), values);
+      addCandidateText(getTransferData(dataTransfer, type), values);
     }
 
     return Array.from(values);
+  }
+
+  function getTransferData(dataTransfer, type) {
+    try {
+      return dataTransfer.getData(type);
+    } catch (error) {
+      return "";
+    }
   }
 
   function addCandidateText(text, values) {
@@ -564,6 +578,24 @@
         collectStrings(item, values, depth + 1);
       }
     }
+  }
+
+  function isProbableResourceDrop(dataTransfer) {
+    if (!dataTransfer) {
+      return false;
+    }
+
+    if ((dataTransfer.files && dataTransfer.files.length > 0) || (dataTransfer.items && dataTransfer.items.length > 0)) {
+      return true;
+    }
+
+    return Array.from(dataTransfer.types || []).some((type) => {
+      const normalized = type.toLowerCase();
+      return normalized.includes("code")
+        || normalized.includes("file")
+        || normalized.includes("resource")
+        || normalized.includes("uri");
+    });
   }
 
   function cssEscape(value) {

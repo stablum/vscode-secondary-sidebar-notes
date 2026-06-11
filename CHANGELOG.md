@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.10
+
+- Added a separate compact layout toggle so multiple notes can be shown stacked with titles and metadata hidden.
+- Made file drops more tolerant of VS Code drag payloads and added an active-editor fallback for stripped editor-tab drops.
+
 ## 0.1.9
 
 - Hid note titles and metadata in current-note-only mode.

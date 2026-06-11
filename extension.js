@@ -9,6 +9,7 @@ const VIEW_ID = "secondarySidebarNotes.notesView";
 const EXTENSION_ID = "secondarySidebarNotes";
 const ACTIVE_NOTE_KEY = "secondarySidebarNotes.activeNote";
 const CURRENT_NOTE_ONLY_KEY = "secondarySidebarNotes.currentNoteOnly";
+const COMPACT_LAYOUT_KEY = "secondarySidebarNotes.compactLayout";
 const STORAGE_FILE = "notes.v1.json";
 const STORAGE_BACKUP_FILE = "notes.v1.json.bak";
 const GLOBAL_SCOPE = "global";
@@ -17,6 +18,7 @@ const WORKSPACE_SCOPE = "workspace";
 function activate(context) {
   const provider = new NotesViewProvider(context);
   provider.syncCurrentNoteOnlyContext();
+  provider.syncCompactLayoutContext();
 
   context.subscriptions.push(
     provider,
@@ -27,6 +29,8 @@ function activate(context) {
     vscode.commands.registerCommand("secondarySidebarNotes.newGlobalNote", () => provider.createNote(GLOBAL_SCOPE)),
     vscode.commands.registerCommand("secondarySidebarNotes.newWorkspaceNote", () => provider.createNote(WORKSPACE_SCOPE)),
     vscode.commands.registerCommand("secondarySidebarNotes.addExternalFileNote", () => provider.addExternalFileNotes()),
+    vscode.commands.registerCommand("secondarySidebarNotes.showCompactLayout", () => provider.setCompactLayout(true)),
+    vscode.commands.registerCommand("secondarySidebarNotes.showDetailedLayout", () => provider.setCompactLayout(false)),
     vscode.commands.registerCommand("secondarySidebarNotes.showCurrentNoteOnly", () => provider.setCurrentNoteOnly(true)),
     vscode.commands.registerCommand("secondarySidebarNotes.showAllNoteTabs", () => provider.setCurrentNoteOnly(false)),
     vscode.commands.registerCommand("secondarySidebarNotes.refresh", () => provider.refresh()),
@@ -135,8 +139,12 @@ class NotesViewProvider {
     await this.addExternalFileNoteUris(uris);
   }
 
-  async addExternalFileNotesFromUris(values) {
+  async addExternalFileNotesFromUris(values, useActiveEditorFallback = false) {
     const uris = Array.isArray(values) ? values.map(parseExternalUri).filter(Boolean) : [];
+    if (uris.length === 0 && useActiveEditorFallback) {
+      uris.push(...activeEditorResourceUris());
+    }
+
     if (uris.length === 0) {
       vscode.window.showInformationMessage("Drop one or more file-backed notes from VS Code's Explorer or editor tabs.");
       return;
@@ -247,7 +255,7 @@ class NotesViewProvider {
         await this.addExternalFileNotes();
         break;
       case "addExternalFileNotesFromUris":
-        await this.addExternalFileNotesFromUris(message.uris);
+        await this.addExternalFileNotesFromUris(message.uris, Boolean(message.useActiveEditorFallback));
         break;
       default:
         break;
@@ -260,11 +268,25 @@ class NotesViewProvider {
     await this.postState();
   }
 
+  async setCompactLayout(value) {
+    await this.context.globalState.update(COMPACT_LAYOUT_KEY, Boolean(value));
+    await this.syncCompactLayoutContext();
+    await this.postState();
+  }
+
   async syncCurrentNoteOnlyContext() {
     await vscode.commands.executeCommand(
       "setContext",
       "secondarySidebarNotes.currentNoteOnly",
       this.context.globalState.get(CURRENT_NOTE_ONLY_KEY, false)
+    );
+  }
+
+  async syncCompactLayoutContext() {
+    await vscode.commands.executeCommand(
+      "setContext",
+      "secondarySidebarNotes.compactLayout",
+      this.context.globalState.get(COMPACT_LAYOUT_KEY, false)
     );
   }
 
@@ -428,6 +450,7 @@ class NotesViewProvider {
         workspaceAvailable: this.workspaceStore.available,
         defaultScope: config.get("defaultScope", WORKSPACE_SCOPE),
         currentNoteOnly: this.context.globalState.get(CURRENT_NOTE_ONLY_KEY, false),
+        compactLayout: this.context.globalState.get(COMPACT_LAYOUT_KEY, false),
         notes,
         active: activeNote ? { scope: activeNote.scope, id: activeNote.note.id } : undefined
       }
@@ -828,6 +851,27 @@ function uniqueExternalUris(uris) {
   return unique;
 }
 
+function activeEditorResourceUris() {
+  const uris = [];
+  const activeDocumentUri = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document
+    ? vscode.window.activeTextEditor.document.uri
+    : undefined;
+
+  if (activeDocumentUri) {
+    uris.push(activeDocumentUri);
+  }
+
+  const activeTab = vscode.window.tabGroups && vscode.window.tabGroups.activeTabGroup
+    ? vscode.window.tabGroups.activeTabGroup.activeTab
+    : undefined;
+  const tabUri = activeTab && activeTab.input && activeTab.input.uri;
+  if (tabUri) {
+    uris.push(tabUri);
+  }
+
+  return uniqueExternalUris(uris).filter(isSupportedExternalUri);
+}
+
 function isSupportedExternalUri(uri) {
   return Boolean(uri && (uri.scheme === "file" || uri.scheme === "vscode-remote"));
 }
@@ -852,29 +896,58 @@ function parseExternalUri(value) {
     return undefined;
   }
 
-  const trimmed = value.trim();
+  const trimmed = stripUriListComment(value.trim());
   if (!trimmed) {
     return undefined;
   }
 
-  if (/^[a-zA-Z]:[\\/]/.test(trimmed) || trimmed.startsWith("\\\\")) {
-    return vscode.Uri.file(trimmed);
-  }
-
-  if (path.isAbsolute(trimmed)) {
-    return vscode.Uri.file(trimmed);
-  }
-
-  try {
-    const parsed = vscode.Uri.parse(trimmed, true);
-    if (parsed.scheme) {
-      return parsed;
+  const candidates = uriCandidates(trimmed);
+  for (const candidate of candidates) {
+    if (/^[a-zA-Z]:[\\/]/.test(candidate) || candidate.startsWith("\\\\")) {
+      return vscode.Uri.file(candidate);
     }
-  } catch (error) {
-    // Fall back to local filesystem paths below.
+
+    if (path.isAbsolute(candidate)) {
+      return vscode.Uri.file(candidate);
+    }
+
+    try {
+      const parsed = vscode.Uri.parse(candidate, true);
+      if (parsed.scheme) {
+        return parsed;
+      }
+    } catch (error) {
+      // Keep trying broader candidates.
+    }
   }
 
   return undefined;
+}
+
+function stripUriListComment(value) {
+  return value.startsWith("#") ? "" : value;
+}
+
+function uriCandidates(value) {
+  const candidates = new Set([value]);
+
+  try {
+    candidates.add(decodeURIComponent(value));
+  } catch (error) {
+    // The original value is still usable.
+  }
+
+  const fileLineColumn = value.match(/^([a-zA-Z]:[\\/].*?)(?::\d+)?(?::\d+)?$/);
+  if (fileLineColumn) {
+    candidates.add(fileLineColumn[1]);
+  }
+
+  const fileUriLineColumn = value.match(/^((?:file|vscode-remote):\/\/.*?)(?::\d+)?(?::\d+)?$/);
+  if (fileUriLineColumn) {
+    candidates.add(fileUriLineColumn[1]);
+  }
+
+  return Array.from(candidates);
 }
 
 function noteKey(scope, id) {
