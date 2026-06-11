@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.11
+
+- Removed the extra outer note box in compact layout so each compact note appears as a single editable box.
+- Added a native `Drop Files` view that accepts VS Code Explorer and editor-tab drops for file-backed notes.
+
 ## 0.1.10
 
 - Added a separate compact layout toggle so multiple notes can be shown stacked with titles and metadata hidden.

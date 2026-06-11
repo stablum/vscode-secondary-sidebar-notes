@@ -14,9 +14,11 @@ const STORAGE_FILE = "notes.v1.json";
 const STORAGE_BACKUP_FILE = "notes.v1.json.bak";
 const GLOBAL_SCOPE = "global";
 const WORKSPACE_SCOPE = "workspace";
+const DROP_VIEW_ID = "secondarySidebarNotes.dropTargetView";
 
 function activate(context) {
   const provider = new NotesViewProvider(context);
+  const dropProvider = new DropTargetProvider();
   provider.syncCurrentNoteOnlyContext();
   provider.syncCompactLayoutContext();
 
@@ -24,6 +26,10 @@ function activate(context) {
     provider,
     vscode.window.registerWebviewViewProvider(VIEW_ID, provider, {
       webviewOptions: { retainContextWhenHidden: true }
+    }),
+    vscode.window.createTreeView(DROP_VIEW_ID, {
+      treeDataProvider: dropProvider,
+      dragAndDropController: new NotesDropController(provider)
     }),
     vscode.commands.registerCommand("secondarySidebarNotes.focus", () => provider.focus()),
     vscode.commands.registerCommand("secondarySidebarNotes.newGlobalNote", () => provider.createNote(GLOBAL_SCOPE)),
@@ -656,6 +662,57 @@ class NotesViewProvider {
   }
 }
 
+class DropTargetProvider {
+  getTreeItem(element) {
+    const item = new vscode.TreeItem(element.label, vscode.TreeItemCollapsibleState.None);
+    item.description = element.description;
+    item.tooltip = "Drop files from Explorer or editor tabs here to add live file-backed notes.";
+    item.iconPath = new vscode.ThemeIcon("cloud-upload");
+    return item;
+  }
+
+  getChildren() {
+    return [
+      {
+        label: "Drop files here",
+        description: "Explorer or editor tabs"
+      }
+    ];
+  }
+}
+
+class NotesDropController {
+  constructor(provider) {
+    this.provider = provider;
+    this.dropMimeTypes = [
+      "files",
+      "text/uri-list",
+      "text/plain",
+      "vscode-editor-data",
+      "application/vnd.code.editor",
+      "application/vnd.code.editors",
+      "application/vnd.code.editor-data",
+      "application/vnd.code.resource",
+      "application/vnd.code.resources",
+      "application/vnd.code.tree.explorer",
+      "application/vnd.code.tree.workbench.explorer.fileview",
+      "application/vnd.code.tree.workbench.explorer.openeditorsview",
+      "application/vnd.code.tree.openeditorsview",
+      "application/vnd.code.tree.openeditors"
+    ];
+    this.dragMimeTypes = [];
+  }
+
+  async handleDrop(_target, dataTransfer, token) {
+    const uris = await urisFromDataTransfer(dataTransfer, token);
+    if (token && token.isCancellationRequested) {
+      return;
+    }
+
+    await this.provider.addExternalFileNotesFromUris(uris, true);
+  }
+}
+
 class JsonNotesStore {
   constructor(uri) {
     this.uri = uri;
@@ -872,6 +929,121 @@ function activeEditorResourceUris() {
   return uniqueExternalUris(uris).filter(isSupportedExternalUri);
 }
 
+async function urisFromDataTransfer(dataTransfer, token) {
+  const uris = [];
+
+  for (const [_mimeType, item] of dataTransfer) {
+    if (token && token.isCancellationRequested) {
+      break;
+    }
+
+    const file = item.asFile();
+    if (file && file.uri) {
+      uris.push(file.uri);
+    }
+
+    collectUrisFromValue(item.value, uris, 0);
+
+    try {
+      collectUrisFromText(await item.asString(), uris);
+    } catch (error) {
+      // Some VS Code-internal data transfer items cannot be stringified by extensions.
+    }
+  }
+
+  return uniqueExternalUris(uris).filter(isSupportedExternalUri);
+}
+
+function collectUrisFromText(text, uris) {
+  if (typeof text !== "string" || text.trim().length === 0) {
+    return;
+  }
+
+  const trimmed = text.trim();
+  try {
+    collectUrisFromValue(JSON.parse(trimmed), uris, 0);
+    return;
+  } catch (error) {
+    // Plain text drops are commonly URI lists or filesystem paths.
+  }
+
+  for (const part of trimmed.replace(/\0/g, "\n").split(/\r?\n/)) {
+    const candidate = part.trim();
+    if (!candidate || candidate.startsWith("#")) {
+      continue;
+    }
+
+    const uri = parseExternalUri(candidate);
+    if (uri) {
+      uris.push(uri);
+    }
+  }
+}
+
+function collectUrisFromValue(value, uris, depth) {
+  if (depth > 8 || value === null || value === undefined) {
+    return;
+  }
+
+  if (typeof value === "string") {
+    collectUrisFromText(value, uris);
+    return;
+  }
+
+  const uri = uriFromObject(value);
+  if (uri) {
+    uris.push(uri);
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectUrisFromValue(item, uris, depth + 1);
+    }
+    return;
+  }
+
+  if (typeof value === "object") {
+    for (const item of Object.values(value)) {
+      collectUrisFromValue(item, uris, depth + 1);
+    }
+  }
+}
+
+function uriFromObject(value) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  if (value instanceof vscode.Uri) {
+    return withoutUriFragment(value);
+  }
+
+  if (typeof value.fsPath === "string") {
+    return vscode.Uri.file(value.fsPath);
+  }
+
+  for (const key of ["uri", "resource", "targetResource", "originalResource", "modifiedResource", "external"]) {
+    if (typeof value[key] === "string") {
+      const uri = parseExternalUri(value[key]);
+      if (uri) {
+        return uri;
+      }
+    }
+  }
+
+  if (typeof value.scheme === "string" && typeof value.path === "string") {
+    return withoutUriFragment(vscode.Uri.from({
+      scheme: value.scheme,
+      authority: typeof value.authority === "string" ? value.authority : "",
+      path: value.path,
+      query: typeof value.query === "string" ? value.query : "",
+      fragment: typeof value.fragment === "string" ? value.fragment : ""
+    }));
+  }
+
+  return undefined;
+}
+
 function isSupportedExternalUri(uri) {
   return Boolean(uri && (uri.scheme === "file" || uri.scheme === "vscode-remote"));
 }
@@ -914,7 +1086,7 @@ function parseExternalUri(value) {
     try {
       const parsed = vscode.Uri.parse(candidate, true);
       if (parsed.scheme) {
-        return parsed;
+        return withoutUriFragment(parsed);
       }
     } catch (error) {
       // Keep trying broader candidates.
@@ -948,6 +1120,10 @@ function uriCandidates(value) {
   }
 
   return Array.from(candidates);
+}
+
+function withoutUriFragment(uri) {
+  return uri.fragment ? uri.with({ fragment: "" }) : uri;
 }
 
 function noteKey(scope, id) {

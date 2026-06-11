@@ -2,7 +2,7 @@
   "name": "secondary-sidebar-notes",
   "displayName": "Secondary Sidebar Notes",
   "description": "Editable project, global, and file-backed notes for a VS Code sidebar view.",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "publisher": "stablum",
   "engines": {
     "vscode": "^1.85.0"
@@ -19,6 +19,7 @@
   "main": "./extension.js",
   "activationEvents": [
     "onView:secondarySidebarNotes.notesView",
+    "onView:secondarySidebarNotes.dropTargetView",
     "onCommand:secondarySidebarNotes.focus",
     "onCommand:secondarySidebarNotes.newGlobalNote",
     "onCommand:secondarySidebarNotes.newWorkspaceNote",
@@ -48,6 +49,13 @@
           "type": "webview",
           "icon": "resources/notes.svg",
           "contextualTitle": "Secondary Sidebar Notes"
+        },
+        {
+          "id": "secondarySidebarNotes.dropTargetView",
+          "name": "Drop Files",
+          "icon": "resources/notes.svg",
+          "visibility": "visible",
+          "contextualTitle": "Drop Files into Notes"
         }
       ]
     },

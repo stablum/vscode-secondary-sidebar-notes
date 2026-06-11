@@ -226,9 +226,12 @@ select {
 }
 
 .compact-layout .note-card {
-  grid-template-rows: minmax(120px, auto) auto;
+  display: block;
+  border: 0;
+  border-radius: 0;
   gap: 5px;
-  padding: 6px;
+  padding: 0;
+  background: transparent;
 }
 
 .compact-layout .note-header,
@@ -241,12 +244,17 @@ select {
   min-height: 120px;
 }
 
+.compact-layout .note-footer {
+  padding: 2px 2px 0;
+}
+
 .current-only .notes-panel {
   padding: 0;
   overflow: hidden;
 }
 
 .current-only .note-card {
+  display: grid;
   min-height: 100%;
   height: 100%;
   border: 0;

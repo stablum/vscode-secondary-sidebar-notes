@@ -7,7 +7,7 @@ Secondary Sidebar Notes adds an editable Notes view for VS Code. It is built for
 - Multiple notes inside the sidebar view, shown as stacked editable panels in expanded mode.
 - Notes can be scoped as project notes or global notes.
 - Notes can be backed by external files, with content read from and written to the source file instead of copied into extension storage.
-- Files can be dragged from VS Code editor tabs or the Explorer into the Notes view to add them as file-backed notes.
+- Files can be dragged from VS Code editor tabs or the Explorer into the native `Drop Files` view to add them as file-backed notes.
 - Native view title icons provide note actions near the Notes view title.
 - A compact layout hides note titles, metadata, and secondary actions while still allowing all notes to appear stacked vertically.
 - A current-note-only mode can additionally hide inactive notes when you want a single full-height note surface.
@@ -21,7 +21,7 @@ Secondary Sidebar Notes adds an editable Notes view for VS Code. It is built for
 1. Run `Secondary Sidebar Notes: Focus Notes` from the Command Palette, or open the Notes activity view.
 2. Drag the Notes view or its container into the Secondary Sidebar if you want it on the right-hand side.
 3. Use the view title icons to create project notes, global notes, or file-backed notes.
-4. Drag a file from a VS Code editor tab or the Explorer into the Notes view to add it as a live file-backed note.
+4. Drag a file from a VS Code editor tab or the Explorer onto the `Drop Files` row to add it as a live file-backed note.
 5. Use `Hide Note Details` for compact stacked note bodies, and `Show Current Note Only` when you want just the active note.
 6. Change a note between `Project` and `Global` with the scope selector next to the title.
 
@@ -36,7 +36,7 @@ git clone https://github.com/stablum/vscode-secondary-sidebar-notes.git
 cd vscode-secondary-sidebar-notes
 npm run check
 npx @vscode/vsce package
-code --install-extension .\secondary-sidebar-notes-0.1.10.vsix
+code --install-extension .\secondary-sidebar-notes-0.1.11.vsix
 ```
 
 You can also install the generated `.vsix` from VS Code with `Extensions: Install from VSIX...`.
