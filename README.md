@@ -9,7 +9,7 @@ Secondary Sidebar Notes adds an editable Notes view for VS Code. It is built for
 - Notes can be backed by external files, with content read from and written to the source file instead of copied into extension storage.
 - Files can be dragged from VS Code editor tabs or the Explorer into the native `Drop Files` view in detailed mode to add them as file-backed notes.
 - Native view title icons provide note actions near the Notes view title.
-- A compact layout hides note titles, metadata, and secondary actions while still allowing all notes to appear stacked vertically.
+- A compact layout hides note titles, metadata, and secondary actions while stacking content-sized note bodies vertically.
 - A current-note-only mode can additionally hide inactive notes when you want a single full-height note surface.
 - Project notes are stored in VS Code workspace storage.
 - Global notes are stored in VS Code global extension storage.
@@ -36,7 +36,7 @@ git clone https://github.com/stablum/vscode-secondary-sidebar-notes.git
 cd vscode-secondary-sidebar-notes
 npm run check
 npx @vscode/vsce package
-code --install-extension .\secondary-sidebar-notes-0.1.12.vsix
+code --install-extension .\secondary-sidebar-notes-0.1.13.vsix
 ```
 
 You can also install the generated `.vsix` from VS Code with `Extensions: Install from VSIX...`.

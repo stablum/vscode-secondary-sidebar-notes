@@ -246,7 +246,7 @@ select {
 }
 
 .compact-layout .content-input {
-  min-height: 120px;
+  min-height: calc(1.45em + 14px);
   padding: 6px;
 }
 

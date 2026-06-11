@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.13
+
+- Made compact note bodies shrink to their content instead of reserving several empty lines.
+
 ## 0.1.12
 
 - Reduced compact layout spacing between stacked notes.

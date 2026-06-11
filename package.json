@@ -2,7 +2,7 @@
   "name": "secondary-sidebar-notes",
   "displayName": "Secondary Sidebar Notes",
   "description": "Editable project, global, and file-backed notes for a VS Code sidebar view.",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "publisher": "stablum",
   "engines": {
     "vscode": "^1.85.0"
